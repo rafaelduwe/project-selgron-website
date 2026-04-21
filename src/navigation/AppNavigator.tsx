@@ -70,21 +70,17 @@ export default function AppNavigator() {
         <Text style={styles.topBarTitle} numberOfLines={1}>
           {activeItem.icon}  {activeItem.label}
         </Text>
-        <View style={styles.topBarBadge}>
-          <Text style={styles.topBarBadgeTexto}>Selgron</Text>
-        </View>
       </View>
 
       <View style={styles.body}>
-        {/* ── Overlay (mobile) ── */}
-        {open && !isDesktop && (
+        {/* ── Overlay ── */}
+        {open && (
           <TouchableOpacity style={styles.overlay} onPress={toggle} activeOpacity={1} />
         )}
 
-        {/* ── Sidebar ── */}
+        {/* ── Sidebar (sempre overlay, nunca empurra o conteúdo) ── */}
         <Animated.View style={[
           styles.sidebar,
-          isDesktop ? styles.sidebarDesktop : styles.sidebarMobile,
           { transform: [{ translateX: slideAnim }] },
         ]}>
           <Image
@@ -115,8 +111,8 @@ export default function AppNavigator() {
           })}
         </Animated.View>
 
-        {/* ── Conteúdo ── */}
-        <View style={[styles.content, isDesktop && { marginLeft: SIDEBAR_WIDTH }]}>
+        {/* ── Conteúdo (sempre largura total) ── */}
+        <View style={styles.content}>
           {activeTab === 'token'     && <TokenScreen />}
           {activeTab === 'reembolso' && <ReembolsoScreen />}
           {activeTab === 'os'        && <OSScreen />}
@@ -143,9 +139,6 @@ const styles = StyleSheet.create({
   hamburger: { padding: 8 },
   hamburgerIcon: { fontSize: 20, color: Colors.text },
   topBarTitle: { flex: 1, color: Colors.text, fontWeight: 'bold', fontSize: 15 },
-  topBarBadge: { backgroundColor: Colors.primary, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 3 },
-  topBarBadgeTexto: { color: Colors.textDark, fontWeight: '900', fontSize: 11, letterSpacing: 1 },
-
   body: { flex: 1, flexDirection: 'row', position: 'relative' },
 
   overlay: {
@@ -154,6 +147,7 @@ const styles = StyleSheet.create({
   },
 
   sidebar: {
+    position: 'absolute', top: 0, bottom: 0, left: 0,
     width: SIDEBAR_WIDTH,
     backgroundColor: Colors.card,
     borderRightWidth: 1,
@@ -162,8 +156,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     zIndex: 20,
   },
-  sidebarDesktop: { position: 'relative' },
-  sidebarMobile: { position: 'absolute', top: 0, bottom: 0, left: 0 },
 
   sidebarLogo: { width: '100%', height: 56, marginBottom: 4 },
   sidebarSub: {
