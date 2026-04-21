@@ -4,7 +4,7 @@ import {
   TextInput, ActivityIndicator, Alert, Switch, Modal,
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { Usuario, getUsuarios, criarUsuario, atualizarPerfil } from '../utils/storage';
+import { Usuario, getUsuarios, criarUsuario, atualizarPerfil, deletarUsuario } from '../utils/storage';
 
 type UsuarioComAtivo = Usuario & { ativo: boolean };
 
@@ -50,6 +50,21 @@ export default function UserManagementScreen() {
     carregar();
   }
 
+  async function confirmarExclusao(u: UsuarioComAtivo) {
+    const confirmar = Platform.OS === 'web'
+      ? window.confirm(`Excluir o usuário "${u.nome}" permanentemente?`)
+      : await new Promise<boolean>(resolve =>
+          Alert.alert('Excluir usuário', `Excluir "${u.nome}" permanentemente?`, [
+            { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Excluir', style: 'destructive', onPress: () => resolve(true) },
+          ])
+        );
+    if (!confirmar) return;
+    const erro = await deletarUsuario(u.id);
+    if (erro) Alert.alert('Erro', erro);
+    else carregar();
+  }
+
   async function alterarPerfil(u: UsuarioComAtivo, perfil: string) {
     await atualizarPerfil(u.id, { perfil });
     carregar();
@@ -88,6 +103,9 @@ export default function UserManagementScreen() {
                       trackColor={{ false: Colors.border, true: Colors.primary }}
                       thumbColor={Colors.text}
                     />
+                    <TouchableOpacity onPress={() => confirmarExclusao(u)} style={styles.excluirBtn}>
+                      <Text style={styles.excluirIcon}>🗑️</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
 
@@ -182,6 +200,8 @@ const styles = StyleSheet.create({
   cardEmail: { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
   cardRight: { alignItems: 'center', gap: 4 },
   ativoLabel: { color: Colors.textSecondary, fontSize: 11 },
+  excluirBtn: { padding: 4, marginTop: 4 },
+  excluirIcon: { fontSize: 18 },
 
   perfisRow: { flexDirection: 'row', gap: 8 },
   perfilBtn: {

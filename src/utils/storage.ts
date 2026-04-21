@@ -284,6 +284,11 @@ export async function atualizarPerfil(id: string, campos: { nome?: string; perfi
   await supabase.from('profiles').update(campos).eq('id', id);
 }
 
+export async function deletarUsuario(id: string): Promise<string | null> {
+  const { error } = await supabase.from('profiles').delete().eq('id', id);
+  return error ? error.message : null;
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export function gerarId(): string {
