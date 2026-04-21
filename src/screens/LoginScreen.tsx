@@ -43,7 +43,7 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.titulo}>Acesso ao Sistema</Text>
+        <Text style={styles.titulo}>Acesso ao sistema</Text>
 
         <Text style={styles.label}>Email</Text>
         <TextInput
@@ -75,7 +75,7 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
         >
           {loading
             ? <ActivityIndicator color={Colors.textDark} />
-            : <Text style={styles.botaoTexto}>ENTRAR</Text>
+            : <Text style={styles.botaoTexto}>Entrar</Text>
           }
         </TouchableOpacity>
 
@@ -93,17 +93,17 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 56,
   },
   logoImagem: {
-    width: '85%' as any,
-    height: 140,
-    marginBottom: 8,
+    width: '95%' as any,
+    height: 180,
+    marginBottom: 12,
   },
   logoSub: {
-    fontSize: 16,
+    fontSize: 15,
     color: Colors.textSecondary,
-    letterSpacing: 4,
+    letterSpacing: 3,
     marginTop: 4,
   },
   card: {
@@ -122,9 +122,8 @@ const styles = StyleSheet.create({
   },
   label: {
     color: Colors.textSecondary,
-    fontSize: 12,
+    fontSize: 13,
     marginBottom: 6,
-    letterSpacing: 1,
   },
   input: {
     backgroundColor: Colors.surface,
@@ -145,9 +144,8 @@ const styles = StyleSheet.create({
   },
   botaoTexto: {
     color: Colors.textDark,
-    fontWeight: '900',
+    fontWeight: 'bold',
     fontSize: 16,
-    letterSpacing: 2,
   },
   erro: {
     color: '#ff6b6b',
