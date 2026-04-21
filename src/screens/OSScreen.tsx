@@ -174,7 +174,7 @@ export default function OSScreen() {
     setTela('assinatura');
   }
 
-  function handleAssinatura(sig: string) {
+  async function handleAssinatura(sig: string) {
     if (!os) return;
     if (assinandoTecnico) {
       const osAtualizada = { ...os, assinaturaTecnico: sig };
