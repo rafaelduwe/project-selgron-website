@@ -24,10 +24,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/site-logo.png",
-      "name": "Plataforma Interna - Selgron",
-      "title": "Plataforma Interna - Selgron",
-      "lang": "pt-BR"
+      "favicon": "./assets/favicon.png"
     },
     "plugins": []
   }
