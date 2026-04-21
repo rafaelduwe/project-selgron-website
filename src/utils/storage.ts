@@ -295,7 +295,6 @@ export async function deletarUsuario(id: string): Promise<string | null> {
 export async function alterarSenhaPropria(senhaAntiga: string, novaSenha: string): Promise<string | null> {
   const u = getUsuarioLogado();
   if (!u) return 'Não autenticado.';
-  // Reautentica para verificar senha antiga
   const { error: reAuthError } = await supabase.auth.signInWithPassword({
     email: u.email,
     password: senhaAntiga,
@@ -306,20 +305,28 @@ export async function alterarSenhaPropria(senhaAntiga: string, novaSenha: string
 }
 
 export async function adminAlterarSenha(userId: string, novaSenha: string): Promise<string | null> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const res = await fetch(
-    `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/admin-reset-password`,
-    {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return 'Sessão expirada. Faça login novamente.';
+    const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/admin-reset-password`;
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`,
+        'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({ userId, novaSenha }),
+    });
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text);
+      return json.error ?? null;
+    } catch {
+      return res.ok ? null : `Erro ${res.status}: Edge Function não encontrada. Deploy a função no Supabase.`;
     }
-  );
-  const json = await res.json();
-  return json.error ?? null;
+  } catch (e: any) {
+    return `Erro de conexão: ${e?.message ?? String(e)}`;
+  }
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

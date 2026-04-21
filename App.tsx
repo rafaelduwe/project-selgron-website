@@ -29,6 +29,8 @@ export default function App() {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Ignora TOKEN_REFRESHED e PASSWORD_RECOVERY para não interferir com re-auth de troca de senha
+      if (event === 'TOKEN_REFRESHED' || event === 'PASSWORD_RECOVERY') return;
       if (session?.user) {
         const { data: perfil } = await supabase
           .from('profiles')
