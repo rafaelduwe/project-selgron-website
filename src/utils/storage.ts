@@ -274,6 +274,9 @@ export async function criarUsuario(nome: string, email: string, senha: string, p
     options: { data: { nome, perfil } },
   });
   if (error) return error.message;
+  if (data.user) {
+    await supabase.from('profiles').upsert({ id: data.user.id, nome, perfil });
+  }
   return null;
 }
 
