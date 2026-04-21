@@ -77,9 +77,6 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
           }
         </TouchableOpacity>
 
-        <Text style={styles.demoTexto}>
-          Demo: tecnico@selgron.com.br / 123456
-        </Text>
       </View>
     </KeyboardAvoidingView>
   );

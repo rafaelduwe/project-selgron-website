@@ -32,11 +32,6 @@ npx expo start
 - Date picker: componente próprio puro JS (DatePicker.tsx)
 - Navegação: @react-navigation/bottom-tabs + stack
 
-## Usuários de teste (senha: 123456)
-- tecnico@selgron.com.br
-- engenharia@selgron.com.br
-- admin@selgron.com.br
-
 ## Identidade visual
 - Cor primária: #F5A200 (laranja Selgron)
 - Fundo: #1A1A1A (preto industrial)

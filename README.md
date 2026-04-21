@@ -31,16 +31,6 @@ npx expo export --platform web
 
 ---
 
-## Usuários de teste
-
-| Email | Senha | Perfil |
-|-------|-------|--------|
-| tecnico@selgron.com.br | 123456 | Técnico |
-| engenharia@selgron.com.br | 123456 | Engenharia |
-| admin@selgron.com.br | 123456 | Admin |
-
----
-
 ## Stack
 
 - **React Native + Expo SDK 54** — web e mobile no mesmo código

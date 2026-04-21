@@ -91,15 +91,11 @@ let ordens: OrdemServico[] = [];
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 const USUARIOS: Usuario[] = [
-  { id: '1', nome: 'Técnico Demo', email: 'tecnico@selgron.com.br', perfil: 'tecnico' },
-  { id: '2', nome: 'Engenharia', email: 'engenharia@selgron.com.br', perfil: 'engenharia' },
-  { id: '3', nome: 'Administrador', email: 'admin@selgron.com.br', perfil: 'admin' },
+  { id: '1', nome: 'Administrador', email: 'admin', perfil: 'admin' },
 ];
 
 const SENHAS: Record<string, string> = {
-  'tecnico@selgron.com.br': '123456',
-  'engenharia@selgron.com.br': '123456',
-  'admin@selgron.com.br': '123456',
+  'admin': 'admin',
 };
 
 export function login(email: string, senha: string): Usuario | null {
