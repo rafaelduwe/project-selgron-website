@@ -4,22 +4,40 @@ import {
   TextInput, ActivityIndicator, Alert, Switch, Modal, Platform,
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { Usuario, getUsuarios, criarUsuario, atualizarPerfil, deletarUsuario, enviarRecuperacaoSenha } from '../utils/storage';
+import {
+  Usuario, getUsuarios, criarUsuario, atualizarPerfil,
+  deletarUsuario, alterarSenhaPropria, adminAlterarSenha,
+  getUsuarioLogado,
+} from '../utils/storage';
 
 type UsuarioComAtivo = Usuario & { ativo: boolean };
 
 export default function UserManagementScreen() {
+  const usuarioLogado = getUsuarioLogado();
+  const isAdmin = usuarioLogado?.perfil === 'admin';
+
   const [usuarios, setUsuarios] = useState<UsuarioComAtivo[]>([]);
   const [carregando, setCarregando] = useState(false);
-  const [modalAberto, setModalAberto] = useState(false);
 
+  // Modal novo usuário
+  const [modalNovo, setModalNovo] = useState(false);
   const [novoNome, setNovoNome] = useState('');
   const [novoEmail, setNovoEmail] = useState('');
-  const [novaSenha, setNovaSenha] = useState('');
+  const [novaSenhaUser, setNovaSenhaUser] = useState('');
   const [novoPerfil, setNovoPerfil] = useState<'tecnico' | 'gestor' | 'admin'>('tecnico');
   const [salvando, setSalvando] = useState(false);
   const [erroModal, setErroModal] = useState('');
   const [sucessoModal, setSucessoModal] = useState('');
+
+  // Modal trocar senha
+  const [modalSenha, setModalSenha] = useState(false);
+  const [usuarioSenha, setUsuarioSenha] = useState<UsuarioComAtivo | null>(null);
+  const [senhaAntiga, setSenhaAntiga] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmSenha, setConfirmSenha] = useState('');
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
+  const [erroSenha, setErroSenha] = useState('');
+  const [sucessoSenha, setSucessoSenha] = useState('');
 
   useEffect(() => { carregar(); }, []);
 
@@ -29,50 +47,77 @@ export default function UserManagementScreen() {
     setCarregando(false);
   }
 
-  function aviso(msg: string) {
-    if (Platform.OS === 'web') window.alert(msg);
-    else Alert.alert('Aviso', msg);
+  function abrirModalSenha(u: UsuarioComAtivo) {
+    setUsuarioSenha(u);
+    setSenhaAntiga(''); setNovaSenha(''); setConfirmSenha('');
+    setErroSenha(''); setSucessoSenha('');
+    setModalSenha(true);
+  }
+
+  async function salvarSenha() {
+    if (!novaSenha || novaSenha.length < 6) {
+      setErroSenha('A nova senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    if (novaSenha !== confirmSenha) {
+      setErroSenha('As senhas não coincidem.');
+      return;
+    }
+    if (!usuarioSenha) return;
+
+    setSalvandoSenha(true);
+    setErroSenha('');
+
+    let erro: string | null = null;
+    const ehProprioUsuario = usuarioSenha.id === usuarioLogado?.id;
+
+    if (ehProprioUsuario) {
+      // Qualquer usuário alterando a própria senha — precisa da senha antiga
+      if (!senhaAntiga) { setErroSenha('Informe a senha atual.'); setSalvandoSenha(false); return; }
+      erro = await alterarSenhaPropria(senhaAntiga, novaSenha);
+    } else {
+      // Admin alterando senha de outro — sem senha antiga
+      erro = await adminAlterarSenha(usuarioSenha.id, novaSenha);
+    }
+
+    setSalvandoSenha(false);
+    if (erro) {
+      setErroSenha(erro);
+    } else {
+      setSucessoSenha('Senha alterada com sucesso!');
+      setSenhaAntiga(''); setNovaSenha(''); setConfirmSenha('');
+    }
   }
 
   async function criarNovoUsuario() {
-    if (!novoNome || !novoEmail || !novaSenha) {
+    if (!novoNome || !novoEmail || !novaSenhaUser) {
       setErroModal('Preencha todos os campos.');
       return;
     }
-    if (novaSenha.length < 6) {
+    if (novaSenhaUser.length < 6) {
       setErroModal('A senha deve ter pelo menos 6 caracteres.');
       return;
     }
-    setErroModal('');
-    setSucessoModal('');
+    setErroModal(''); setSucessoModal('');
     setSalvando(true);
-    const erro = await criarUsuario(novoNome, novoEmail, novaSenha, novoPerfil);
+    const erro = await criarUsuario(novoNome, novoEmail, novaSenhaUser, novoPerfil);
     setSalvando(false);
     if (erro) {
       setErroModal(erro);
     } else {
       setSucessoModal(`Usuário ${novoNome} criado com sucesso!`);
-      setNovoNome(''); setNovoEmail(''); setNovaSenha(''); setNovoPerfil('tecnico');
+      setNovoNome(''); setNovoEmail(''); setNovaSenhaUser(''); setNovoPerfil('tecnico');
       carregar();
     }
   }
 
-  async function enviarResetSenha(email: string, nome: string) {
-    const confirmar = Platform.OS === 'web'
-      ? window.confirm(`Enviar email de recuperação de senha para ${nome}?`)
-      : await new Promise<boolean>(resolve =>
-          Alert.alert('Recuperar senha', `Enviar email para ${nome}?`, [
-            { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Enviar', onPress: () => resolve(true) },
-          ])
-        );
-    if (!confirmar) return;
-    const erro = await enviarRecuperacaoSenha(email);
-    aviso(erro ? `Erro: ${erro}` : 'Email de recuperação enviado!');
-  }
-
   async function alternarAtivo(u: UsuarioComAtivo) {
     await atualizarPerfil(u.id, { ativo: !u.ativo });
+    carregar();
+  }
+
+  async function alterarPerfil(u: UsuarioComAtivo, perfil: string) {
+    await atualizarPerfil(u.id, { perfil });
     carregar();
   }
 
@@ -87,24 +132,26 @@ export default function UserManagementScreen() {
         );
     if (!confirmar) return;
     const erro = await deletarUsuario(u.id);
-    if (erro) Alert.alert('Erro', erro);
-    else carregar();
-  }
-
-  async function alterarPerfil(u: UsuarioComAtivo, perfil: string) {
-    await atualizarPerfil(u.id, { perfil });
-    carregar();
+    if (erro) {
+      if (Platform.OS === 'web') window.alert(`Erro: ${erro}`);
+      else Alert.alert('Erro', erro);
+    } else {
+      carregar();
+    }
   }
 
   const PERFIS: Array<'tecnico' | 'gestor' | 'admin'> = ['tecnico', 'gestor', 'admin'];
+  const ehProprioUsuario = (u: UsuarioComAtivo) => u.id === usuarioLogado?.id;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.titulo}>Gestão de Usuários</Text>
-        <TouchableOpacity style={styles.botaoNovo} onPress={() => setModalAberto(true)}>
-          <Text style={styles.botaoNovoTexto}>+ Novo</Text>
-        </TouchableOpacity>
+        <Text style={styles.titulo}>{isAdmin ? 'Gestão de Usuários' : 'Meu Perfil'}</Text>
+        {isAdmin && (
+          <TouchableOpacity style={styles.botaoNovo} onPress={() => { setErroModal(''); setSucessoModal(''); setModalNovo(true); }}>
+            <Text style={styles.botaoNovoTexto}>+ Novo</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {carregando ? (
@@ -122,42 +169,51 @@ export default function UserManagementScreen() {
                     <Text style={styles.cardEmail}>{u.email || '—'}</Text>
                   </View>
                   <View style={styles.cardRight}>
-                    <Text style={styles.ativoLabel}>{u.ativo ? 'Ativo' : 'Inativo'}</Text>
-                    <Switch
-                      value={u.ativo}
-                      onValueChange={() => alternarAtivo(u)}
-                      trackColor={{ false: Colors.border, true: Colors.primary }}
-                      thumbColor={Colors.text}
-                    />
-                    <TouchableOpacity onPress={() => enviarResetSenha(u.email || '', u.nome)} style={styles.excluirBtn}>
-                      <Text style={styles.excluirIcon}>🔑</Text>
+                    {isAdmin && (
+                      <>
+                        <Text style={styles.ativoLabel}>{u.ativo ? 'Ativo' : 'Inativo'}</Text>
+                        <Switch
+                          value={u.ativo}
+                          onValueChange={() => alternarAtivo(u)}
+                          trackColor={{ false: Colors.border, true: Colors.primary }}
+                          thumbColor={Colors.text}
+                        />
+                      </>
+                    )}
+                    <TouchableOpacity onPress={() => abrirModalSenha(u)} style={styles.iconBtn}>
+                      <Text style={styles.iconBtnTexto}>🔒</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => confirmarExclusao(u)} style={styles.excluirBtn}>
-                      <Text style={styles.excluirIcon}>🗑️</Text>
-                    </TouchableOpacity>
+                    {isAdmin && !ehProprioUsuario(u) && (
+                      <TouchableOpacity onPress={() => confirmarExclusao(u)} style={styles.iconBtn}>
+                        <Text style={styles.iconBtnTexto}>🗑️</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
 
-                <View style={styles.perfisRow}>
-                  {PERFIS.map(p => (
-                    <TouchableOpacity
-                      key={p}
-                      style={[styles.perfilBtn, u.perfil === p && styles.perfilBtnAtivo]}
-                      onPress={() => alterarPerfil(u, p)}
-                    >
-                      <Text style={[styles.perfilBtnTexto, u.perfil === p && styles.perfilBtnTextoAtivo]}>
-                        {p}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                {isAdmin && (
+                  <View style={styles.perfisRow}>
+                    {PERFIS.map(p => (
+                      <TouchableOpacity
+                        key={p}
+                        style={[styles.perfilBtn, u.perfil === p && styles.perfilBtnAtivo]}
+                        onPress={() => alterarPerfil(u, p)}
+                      >
+                        <Text style={[styles.perfilBtnTexto, u.perfil === p && styles.perfilBtnTextoAtivo]}>
+                          {p}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
               </View>
             ))
           )}
         </ScrollView>
       )}
 
-      <Modal visible={modalAberto} transparent animationType="fade">
+      {/* ── Modal: Novo Usuário ── */}
+      <Modal visible={modalNovo} transparent animationType="fade">
         <View style={styles.overlay}>
           <View style={styles.modal}>
             <Text style={styles.modalTitulo}>Novo Usuário</Text>
@@ -175,7 +231,7 @@ export default function UserManagementScreen() {
               keyboardType="email-address" autoCapitalize="none" />
 
             <Text style={styles.label}>Senha</Text>
-            <TextInput style={styles.input} value={novaSenha} onChangeText={setNovaSenha}
+            <TextInput style={styles.input} value={novaSenhaUser} onChangeText={setNovaSenhaUser}
               placeholderTextColor={Colors.textSecondary} placeholder="Mínimo 6 caracteres"
               secureTextEntry />
 
@@ -195,13 +251,57 @@ export default function UserManagementScreen() {
             </View>
 
             <View style={styles.modalBotoes}>
-              <TouchableOpacity style={styles.botaoCancelar} onPress={() => setModalAberto(false)}>
-                <Text style={styles.botaoCancelarTexto}>Cancelar</Text>
+              <TouchableOpacity style={styles.botaoCancelar} onPress={() => setModalNovo(false)}>
+                <Text style={styles.botaoCancelarTexto}>Fechar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.botaoSalvar} onPress={criarNovoUsuario} disabled={salvando}>
                 {salvando
                   ? <ActivityIndicator color={Colors.textDark} />
                   : <Text style={styles.botaoSalvarTexto}>Criar</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Modal: Trocar Senha ── */}
+      <Modal visible={modalSenha} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitulo}>Trocar Senha</Text>
+            {usuarioSenha && (
+              <Text style={styles.modalSubtitulo}>{usuarioSenha.nome}</Text>
+            )}
+
+            {erroSenha ? <Text style={styles.msgErro}>{erroSenha}</Text> : null}
+            {sucessoSenha ? <Text style={styles.msgSucesso}>{sucessoSenha}</Text> : null}
+
+            {/* Senha antiga só aparece se for o próprio usuário */}
+            {usuarioSenha?.id === usuarioLogado?.id && (
+              <>
+                <Text style={styles.label}>Senha atual</Text>
+                <TextInput style={styles.input} value={senhaAntiga} onChangeText={setSenhaAntiga}
+                  placeholderTextColor={Colors.textSecondary} placeholder="••••••" secureTextEntry />
+              </>
+            )}
+
+            <Text style={styles.label}>Nova senha</Text>
+            <TextInput style={styles.input} value={novaSenha} onChangeText={setNovaSenha}
+              placeholderTextColor={Colors.textSecondary} placeholder="Mínimo 6 caracteres" secureTextEntry />
+
+            <Text style={styles.label}>Confirmar nova senha</Text>
+            <TextInput style={styles.input} value={confirmSenha} onChangeText={setConfirmSenha}
+              placeholderTextColor={Colors.textSecondary} placeholder="••••••" secureTextEntry />
+
+            <View style={styles.modalBotoes}>
+              <TouchableOpacity style={styles.botaoCancelar} onPress={() => setModalSenha(false)}>
+                <Text style={styles.botaoCancelarTexto}>Fechar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.botaoSalvar} onPress={salvarSenha} disabled={salvandoSenha}>
+                {salvandoSenha
+                  ? <ActivityIndicator color={Colors.textDark} />
+                  : <Text style={styles.botaoSalvarTexto}>Salvar</Text>
                 }
               </TouchableOpacity>
             </View>
@@ -232,16 +332,8 @@ const styles = StyleSheet.create({
   cardEmail: { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
   cardRight: { alignItems: 'center', gap: 4 },
   ativoLabel: { color: Colors.textSecondary, fontSize: 11 },
-  excluirBtn: { padding: 4, marginTop: 4 },
-  excluirIcon: { fontSize: 18 },
-  msgErro: {
-    color: '#ff6b6b', backgroundColor: '#2d1010',
-    padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 13,
-  },
-  msgSucesso: {
-    color: '#6bff9e', backgroundColor: '#0d2d1a',
-    padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 13,
-  },
+  iconBtn: { padding: 4 },
+  iconBtnTexto: { fontSize: 18 },
 
   perfisRow: { flexDirection: 'row', gap: 8 },
   perfilBtn: {
@@ -254,8 +346,9 @@ const styles = StyleSheet.create({
 
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 24 },
   modal: { backgroundColor: Colors.card, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: Colors.border },
-  modalTitulo: { color: Colors.text, fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
-  label: { color: Colors.textSecondary, fontSize: 12, marginBottom: 6, letterSpacing: 1 },
+  modalTitulo: { color: Colors.text, fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
+  modalSubtitulo: { color: Colors.textSecondary, fontSize: 13, marginBottom: 16 },
+  label: { color: Colors.textSecondary, fontSize: 12, marginBottom: 6 },
   input: {
     backgroundColor: Colors.surface, borderRadius: 8,
     borderWidth: 1, borderColor: Colors.border,
@@ -272,4 +365,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary, alignItems: 'center',
   },
   botaoSalvarTexto: { color: Colors.textDark, fontWeight: 'bold' },
+  msgErro: {
+    color: '#ff6b6b', backgroundColor: '#2d1010',
+    padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 13,
+  },
+  msgSucesso: {
+    color: '#6bff9e', backgroundColor: '#0d2d1a',
+    padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 13,
+  },
 });

@@ -23,8 +23,9 @@ const MENU_BASE: { key: Tab; label: string; icon: string; sub: string }[] = [
   { key: 'os',        label: 'Ordem de Serviço',    icon: '📋', sub: 'Formulário de OS' },
 ];
 
-const MENU_GESTOR = { key: 'admin' as Tab,    label: 'Painel',    icon: '📊', sub: 'Histórico geral' };
-const MENU_ADMIN  = { key: 'usuarios' as Tab, label: 'Usuários',  icon: '👥', sub: 'Gestão de acesso' };
+const MENU_GESTOR  = { key: 'admin' as Tab,    label: 'Painel',         icon: '📊', sub: 'Histórico geral' };
+const MENU_PERFIL  = { key: 'usuarios' as Tab, label: 'Meu Perfil',     icon: '👤', sub: 'Senha e dados' };
+const MENU_USUARIOS = { key: 'usuarios' as Tab, label: 'Usuários',      icon: '👥', sub: 'Gestão de acesso' };
 
 export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
   const usuario = getUsuarioLogado();
@@ -33,7 +34,7 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
   const MENU = [
     ...MENU_BASE,
     ...(perfil === 'gestor' || perfil === 'admin' ? [MENU_GESTOR] : []),
-    ...(perfil === 'admin' ? [MENU_ADMIN] : []),
+    ...(perfil === 'admin' ? [MENU_USUARIOS] : [MENU_PERFIL]),
   ];
 
   const [activeTab, setActiveTab] = useState<Tab>('home');

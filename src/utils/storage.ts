@@ -292,14 +292,34 @@ export async function deletarUsuario(id: string): Promise<string | null> {
   return error ? error.message : null;
 }
 
-export async function enviarRecuperacaoSenha(email: string): Promise<string | null> {
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+export async function alterarSenhaPropria(senhaAntiga: string, novaSenha: string): Promise<string | null> {
+  const u = getUsuarioLogado();
+  if (!u) return 'Não autenticado.';
+  // Reautentica para verificar senha antiga
+  const { error: reAuthError } = await supabase.auth.signInWithPassword({
+    email: u.email,
+    password: senhaAntiga,
+  });
+  if (reAuthError) return 'Senha atual incorreta.';
+  const { error } = await supabase.auth.updateUser({ password: novaSenha });
   return error ? error.message : null;
 }
 
-export async function alterarSenhaPropria(novaSenha: string): Promise<string | null> {
-  const { error } = await supabase.auth.updateUser({ password: novaSenha });
-  return error ? error.message : null;
+export async function adminAlterarSenha(userId: string, novaSenha: string): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(
+    `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/admin-reset-password`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({ userId, novaSenha }),
+    }
+  );
+  const json = await res.json();
+  return json.error ?? null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

@@ -10,16 +10,6 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
-  const [msgRecupera, setMsgRecupera] = useState('');
-
-  async function handleRecuperarSenha() {
-    if (!email) { setErro('Digite seu email antes de recuperar a senha.'); return; }
-    setErro(''); setMsgRecupera('');
-    const { enviarRecuperacaoSenha } = require('../utils/storage');
-    const erroRecupera = await enviarRecuperacaoSenha(email.trim().toLowerCase());
-    if (erroRecupera) setErro(erroRecupera);
-    else setMsgRecupera('Email de recuperação enviado! Verifique sua caixa de entrada.');
-  }
 
   async function handleLogin() {
     if (!email || !senha) {
@@ -77,7 +67,6 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
         />
 
         {erro ? <Text style={styles.erro}>{erro}</Text> : null}
-        {msgRecupera ? <Text style={styles.sucesso}>{msgRecupera}</Text> : null}
 
         <TouchableOpacity
           style={[styles.botao, loading && { opacity: 0.7 }]}
@@ -89,11 +78,6 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
             : <Text style={styles.botaoTexto}>Entrar</Text>
           }
         </TouchableOpacity>
-
-        <TouchableOpacity onPress={handleRecuperarSenha} style={styles.linkRecupera}>
-          <Text style={styles.linkRecuperaTexto}>Esqueci minha senha</Text>
-        </TouchableOpacity>
-
       </View>
     </KeyboardAvoidingView>
   );
@@ -171,15 +155,4 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
   },
-  sucesso: {
-    color: '#6bff9e',
-    fontSize: 13,
-    textAlign: 'center',
-    marginBottom: 10,
-    backgroundColor: '#0d2d1a',
-    padding: 10,
-    borderRadius: 8,
-  },
-  linkRecupera: { alignItems: 'center', marginTop: 14 },
-  linkRecuperaTexto: { color: Colors.textSecondary, fontSize: 13 },
 });
