@@ -14,7 +14,10 @@ export default function App() {
   const [inicializando, setInicializando] = useState(true);
 
   useEffect(() => {
+    const timeout = setTimeout(() => setInicializando(false), 5000);
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      clearTimeout(timeout);
       if (session?.user) {
         const { data: perfil } = await supabase
           .from('profiles')
@@ -26,6 +29,9 @@ export default function App() {
           setLogado(true);
         }
       }
+      setInicializando(false);
+    }).catch(() => {
+      clearTimeout(timeout);
       setInicializando(false);
     });
 
