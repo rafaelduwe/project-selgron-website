@@ -4,6 +4,7 @@ import {
   Animated, Platform, Image, useWindowDimensions, Alert,
 } from 'react-native';
 import { Colors } from '../theme/colors';
+import HomeScreen from '../screens/HomeScreen';
 import TokenScreen from '../screens/TokenScreen';
 import ReembolsoScreen from '../screens/ReembolsoScreen';
 import OSScreen from '../screens/OSScreen';
@@ -11,18 +12,19 @@ import AdminScreen from '../screens/AdminScreen';
 import UserManagementScreen from '../screens/UserManagementScreen';
 import { getUsuarioLogado, logout } from '../utils/storage';
 
-type Tab = 'token' | 'reembolso' | 'os' | 'admin' | 'usuarios';
+type Tab = 'home' | 'token' | 'reembolso' | 'os' | 'admin' | 'usuarios';
 
 const SIDEBAR_WIDTH = 240;
 
 const MENU_BASE: { key: Tab; label: string; icon: string; sub: string }[] = [
-  { key: 'token',     label: 'Gerador de Token',  icon: '🔑', sub: 'Acesso a máquinas' },
-  { key: 'reembolso', label: 'Reembolso',          icon: '🧾', sub: 'Lançamento de notas' },
-  { key: 'os',        label: 'Ordem de Serviço',   icon: '📋', sub: 'Formulário de OS' },
+  { key: 'home',      label: 'Início',             icon: '🏠', sub: 'Painel principal' },
+  { key: 'token',     label: 'Gerador de Token',   icon: '🔑', sub: 'Acesso a máquinas' },
+  { key: 'reembolso', label: 'Reembolso',           icon: '🧾', sub: 'Lançamento de notas' },
+  { key: 'os',        label: 'Ordem de Serviço',    icon: '📋', sub: 'Formulário de OS' },
 ];
 
-const MENU_GESTOR = { key: 'admin' as Tab,    label: 'Painel',          icon: '📊', sub: 'Histórico geral' };
-const MENU_ADMIN  = { key: 'usuarios' as Tab, label: 'Usuários',        icon: '👥', sub: 'Gestão de acesso' };
+const MENU_GESTOR = { key: 'admin' as Tab,    label: 'Painel',    icon: '📊', sub: 'Histórico geral' };
+const MENU_ADMIN  = { key: 'usuarios' as Tab, label: 'Usuários',  icon: '👥', sub: 'Gestão de acesso' };
 
 export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
   const usuario = getUsuarioLogado();
@@ -34,20 +36,18 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
     ...(perfil === 'admin' ? [MENU_ADMIN] : []),
   ];
 
-  const [activeTab, setActiveTab] = useState<Tab>('token');
+  const [activeTab, setActiveTab] = useState<Tab>('home');
   const [open, setOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
 
-  // Título fixo — reseta sempre que a aba mudar
   useEffect(() => {
     if (Platform.OS === 'web') {
       document.title = 'Plataforma Interna - Selgron';
     }
   });
 
-  // No desktop o menu fica sempre aberto
   useEffect(() => {
     if (isDesktop) {
       Animated.timing(slideAnim, { toValue: 0, duration: 200, useNativeDriver: false }).start();
@@ -86,7 +86,7 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
     }
   }
 
-  const activeItem = MENU.find(m => m.key === activeTab) ?? MENU[0];;
+  const activeItem = MENU.find(m => m.key === activeTab) ?? MENU[0];
 
   return (
     <View style={styles.root}>
@@ -101,12 +101,22 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
       </View>
 
       <View style={styles.body}>
-        {/* ── Overlay ── */}
-        {open && (
+        {/* ── Conteúdo (sempre largura total) ── */}
+        <View style={styles.content}>
+          {activeTab === 'home'      && <HomeScreen />}
+          {activeTab === 'token'     && <TokenScreen />}
+          {activeTab === 'reembolso' && <ReembolsoScreen />}
+          {activeTab === 'os'        && <OSScreen />}
+          {activeTab === 'admin'     && <AdminScreen />}
+          {activeTab === 'usuarios'  && <UserManagementScreen />}
+        </View>
+
+        {/* ── Overlay (cobre tudo incluindo topbar) ── */}
+        {open && !isDesktop && (
           <TouchableOpacity style={styles.overlay} onPress={toggle} activeOpacity={1} />
         )}
 
-        {/* ── Sidebar (sempre overlay, nunca empurra o conteúdo) ── */}
+        {/* ── Sidebar (cobre topbar quando aberto) ── */}
         <Animated.View style={[
           styles.sidebar,
           { transform: [{ translateX: slideAnim }] },
@@ -148,15 +158,6 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
             </View>
           </TouchableOpacity>
         </Animated.View>
-
-        {/* ── Conteúdo (sempre largura total) ── */}
-        <View style={styles.content}>
-          {activeTab === 'token'     && <TokenScreen />}
-          {activeTab === 'reembolso' && <ReembolsoScreen />}
-          {activeTab === 'os'        && <OSScreen />}
-          {activeTab === 'admin'     && <AdminScreen />}
-          {activeTab === 'usuarios'  && <UserManagementScreen />}
-        </View>
       </View>
     </View>
   );
@@ -174,20 +175,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     gap: 12,
-    zIndex: 100,
+    zIndex: 1,
   },
   hamburger: { padding: 8 },
   hamburgerIcon: { fontSize: 20, color: Colors.text },
   topBarTitle: { flex: 1, color: Colors.text, fontWeight: 'bold', fontSize: 15 },
-  body: { flex: 1, flexDirection: 'row', position: 'relative' },
+
+  body: { flex: 1, position: 'relative' },
 
   overlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    position: 'absolute', top: -52, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10,
   },
 
   sidebar: {
-    position: 'absolute', top: 0, bottom: 0, left: 0,
+    position: 'absolute', top: -52, bottom: 0, left: 0,
     width: SIDEBAR_WIDTH,
     backgroundColor: Colors.card,
     borderRightWidth: 1,
