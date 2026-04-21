@@ -34,8 +34,12 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>SELGRON</Text>
-        <Text style={styles.logoSub}>Field Tech</Text>
+        <Image
+          source={require('../../assets/selgron-logo.png')}
+          style={styles.logoImagem}
+          resizeMode="contain"
+        />
+        <Text style={styles.logoSub}>Plataforma Interna</Text>
       </View>
 
       <View style={styles.card}>
@@ -92,11 +96,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  logoText: {
-    fontSize: 42,
-    fontWeight: '900',
-    color: Colors.primary,
-    letterSpacing: 6,
+  logoImagem: {
+    width: 220,
+    height: 80,
+    marginBottom: 8,
   },
   logoSub: {
     fontSize: 16,
