@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View, ActivityIndicator } from 'react-native';
 import LoginScreen from './src/screens/LoginScreen';
 import AppNavigator from './src/navigation/AppNavigator';
 import { Colors } from './src/theme/colors';
@@ -50,7 +51,11 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (inicializando) return null;
+  if (inicializando) return (
+    <View style={{ flex: 1, backgroundColor: '#1A1A1A', justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator size="large" color="#F5A200" />
+    </View>
+  );
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.background }}>
