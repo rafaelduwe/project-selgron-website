@@ -49,13 +49,8 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
   });
 
   useEffect(() => {
-    if (isDesktop) {
-      Animated.timing(slideAnim, { toValue: 0, duration: 200, useNativeDriver: false }).start();
-      setOpen(true);
-    } else {
-      Animated.timing(slideAnim, { toValue: -SIDEBAR_WIDTH, duration: 200, useNativeDriver: false }).start();
-      setOpen(false);
-    }
+    Animated.timing(slideAnim, { toValue: -SIDEBAR_WIDTH, duration: 200, useNativeDriver: false }).start();
+    setOpen(false);
   }, [isDesktop]);
 
   function toggle() {
@@ -113,7 +108,7 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
       </View>
 
       {/* ── Overlay e Sidebar fora do body — sobrepõem tudo incluindo topbar ── */}
-      {open && !isDesktop && (
+      {open && (
         <TouchableOpacity style={styles.overlay} onPress={toggle} activeOpacity={1} />
       )}
 
@@ -124,11 +119,9 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
             style={styles.sidebarLogo}
             resizeMode="contain"
           />
-          {!isDesktop && (
-            <TouchableOpacity onPress={toggle} style={styles.fecharBtn}>
-              <Text style={styles.fecharIcon}>✕</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={toggle} style={styles.fecharBtn}>
+            <Text style={styles.fecharIcon}>✕</Text>
+          </TouchableOpacity>
         </View>
         <Text style={styles.sidebarSub}>Plataforma Interna</Text>
         <View style={styles.sidebarDivider} />
