@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, ActivityIndicator, Alert, Switch, Modal,
+  TextInput, ActivityIndicator, Alert, Switch, Modal, Platform,
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { Usuario, getUsuarios, criarUsuario, atualizarPerfil, deletarUsuario } from '../utils/storage';
+import { Usuario, getUsuarios, criarUsuario, atualizarPerfil, deletarUsuario, enviarRecuperacaoSenha } from '../utils/storage';
 
 type UsuarioComAtivo = Usuario & { ativo: boolean };
 
@@ -18,6 +18,8 @@ export default function UserManagementScreen() {
   const [novaSenha, setNovaSenha] = useState('');
   const [novoPerfil, setNovoPerfil] = useState<'tecnico' | 'gestor' | 'admin'>('tecnico');
   const [salvando, setSalvando] = useState(false);
+  const [erroModal, setErroModal] = useState('');
+  const [sucessoModal, setSucessoModal] = useState('');
 
   useEffect(() => { carregar(); }, []);
 
@@ -27,22 +29,46 @@ export default function UserManagementScreen() {
     setCarregando(false);
   }
 
+  function aviso(msg: string) {
+    if (Platform.OS === 'web') window.alert(msg);
+    else Alert.alert('Aviso', msg);
+  }
+
   async function criarNovoUsuario() {
     if (!novoNome || !novoEmail || !novaSenha) {
-      Alert.alert('Atenção', 'Preencha todos os campos.');
+      setErroModal('Preencha todos os campos.');
       return;
     }
+    if (novaSenha.length < 6) {
+      setErroModal('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    setErroModal('');
+    setSucessoModal('');
     setSalvando(true);
     const erro = await criarUsuario(novoNome, novoEmail, novaSenha, novoPerfil);
     setSalvando(false);
     if (erro) {
-      Alert.alert('Erro', erro);
+      setErroModal(erro);
     } else {
-      Alert.alert('Sucesso', `Usuário ${novoNome} criado.`);
-      setModalAberto(false);
+      setSucessoModal(`Usuário ${novoNome} criado com sucesso!`);
       setNovoNome(''); setNovoEmail(''); setNovaSenha(''); setNovoPerfil('tecnico');
       carregar();
     }
+  }
+
+  async function enviarResetSenha(email: string, nome: string) {
+    const confirmar = Platform.OS === 'web'
+      ? window.confirm(`Enviar email de recuperação de senha para ${nome}?`)
+      : await new Promise<boolean>(resolve =>
+          Alert.alert('Recuperar senha', `Enviar email para ${nome}?`, [
+            { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Enviar', onPress: () => resolve(true) },
+          ])
+        );
+    if (!confirmar) return;
+    const erro = await enviarRecuperacaoSenha(email);
+    aviso(erro ? `Erro: ${erro}` : 'Email de recuperação enviado!');
   }
 
   async function alternarAtivo(u: UsuarioComAtivo) {
@@ -103,6 +129,9 @@ export default function UserManagementScreen() {
                       trackColor={{ false: Colors.border, true: Colors.primary }}
                       thumbColor={Colors.text}
                     />
+                    <TouchableOpacity onPress={() => enviarResetSenha(u.email || '', u.nome)} style={styles.excluirBtn}>
+                      <Text style={styles.excluirIcon}>🔑</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => confirmarExclusao(u)} style={styles.excluirBtn}>
                       <Text style={styles.excluirIcon}>🗑️</Text>
                     </TouchableOpacity>
@@ -132,6 +161,9 @@ export default function UserManagementScreen() {
         <View style={styles.overlay}>
           <View style={styles.modal}>
             <Text style={styles.modalTitulo}>Novo Usuário</Text>
+
+            {erroModal ? <Text style={styles.msgErro}>{erroModal}</Text> : null}
+            {sucessoModal ? <Text style={styles.msgSucesso}>{sucessoModal}</Text> : null}
 
             <Text style={styles.label}>Nome</Text>
             <TextInput style={styles.input} value={novoNome} onChangeText={setNovoNome}
@@ -202,6 +234,14 @@ const styles = StyleSheet.create({
   ativoLabel: { color: Colors.textSecondary, fontSize: 11 },
   excluirBtn: { padding: 4, marginTop: 4 },
   excluirIcon: { fontSize: 18 },
+  msgErro: {
+    color: '#ff6b6b', backgroundColor: '#2d1010',
+    padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 13,
+  },
+  msgSucesso: {
+    color: '#6bff9e', backgroundColor: '#0d2d1a',
+    padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 13,
+  },
 
   perfisRow: { flexDirection: 'row', gap: 8 },
   perfilBtn: {

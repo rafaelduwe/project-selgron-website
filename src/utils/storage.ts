@@ -275,7 +275,10 @@ export async function criarUsuario(nome: string, email: string, senha: string, p
   });
   if (error) return error.message;
   if (data.user) {
-    await supabase.from('profiles').upsert({ id: data.user.id, nome, perfil });
+    const { error: perfilError } = await supabase
+      .from('profiles')
+      .upsert({ id: data.user.id, nome, perfil }, { onConflict: 'id' });
+    if (perfilError) return perfilError.message;
   }
   return null;
 }
@@ -286,6 +289,16 @@ export async function atualizarPerfil(id: string, campos: { nome?: string; perfi
 
 export async function deletarUsuario(id: string): Promise<string | null> {
   const { error } = await supabase.from('profiles').delete().eq('id', id);
+  return error ? error.message : null;
+}
+
+export async function enviarRecuperacaoSenha(email: string): Promise<string | null> {
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  return error ? error.message : null;
+}
+
+export async function alterarSenhaPropria(novaSenha: string): Promise<string | null> {
+  const { error } = await supabase.auth.updateUser({ password: novaSenha });
   return error ? error.message : null;
 }
 
