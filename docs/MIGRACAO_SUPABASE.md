@@ -171,28 +171,91 @@ No Netlify: **Site Settings → Environment Variables** → adicionar as mesmas 
 
 ---
 
-## Passos manuais (Supabase)
+## SQL adicional (rodar após os scripts principais)
 
-1. Criar conta em **supabase.com**
-2. Criar novo projeto (região: South America)
-3. Ir em **SQL Editor** e rodar os scripts acima em ordem
-4. Ir em **Authentication → Users** e criar o primeiro usuário admin
-5. Copiar `Project URL` e `anon key` de **Settings → API**
-6. Colocar no `.env` local e no Netlify
+```sql
+-- Permite admin excluir perfis de usuário
+create policy "profiles_delete" on profiles for delete
+  using (get_perfil() = 'admin');
+```
 
 ---
 
-## Testes previstos
+## Passos manuais (Supabase) — já executados
 
-- [ ] Login com usuário existente
-- [ ] Login com usuário inválido (mensagem de erro)
-- [ ] Criar OS, deslogar, logar novamente — OS persiste
-- [ ] Criar Reembolso, fechar browser, reabrir — Reembolso persiste
-- [ ] Usuário tecnico não vê OS de outro tecnico
-- [ ] Gestor vê OS de todos os técnicos
-- [ ] Admin consegue criar novo usuário
-- [ ] Admin consegue desativar usuário
-- [ ] Painel mostra histórico com nome do técnico e data
+1. ✅ Criar conta em **supabase.com**
+2. ✅ Criar projeto (região: South America)
+3. ✅ Rodar scripts SQL no SQL Editor
+4. ✅ Criar usuários admin via Authentication → Users
+5. ✅ Credenciais no `.env` local e no Vercel
+
+### Problema encontrado na criação de usuários via Dashboard
+O trigger `handle_new_user` falhava porque o Dashboard não passa metadados (`nome` ficava NULL violando NOT NULL).
+
+**Fixes aplicados:**
+```sql
+-- 1. DEFAULT no campo nome
+ALTER TABLE profiles ALTER COLUMN nome SET DEFAULT 'Usuário';
+
+-- 2. Trigger com COALESCE e EXCEPTION handler
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO profiles (id, nome, perfil)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'nome', split_part(new.email, '@', 1), 'Usuario'),
+    COALESCE(new.raw_user_meta_data->>'perfil', 'tecnico')
+  );
+  RETURN new;
+EXCEPTION WHEN OTHERS THEN
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+### Inserir perfis manualmente (usuários criados via Dashboard)
+```sql
+INSERT INTO profiles (id, nome, perfil)
+SELECT id, split_part(email, '@', 1), 'tecnico'
+FROM auth.users
+WHERE id NOT IN (SELECT id FROM profiles);
+
+-- Promover admin
+UPDATE profiles SET perfil = 'admin', nome = 'Rafael Duwe'
+WHERE id = (SELECT id FROM auth.users WHERE email = 'rafael.duwe@selgron.com.br');
+```
+
+---
+
+## Arquivos modificados (estado final)
+
+| Arquivo | O que mudou |
+|---------|-------------|
+| `src/utils/supabase.ts` | **NOVO** — cliente Supabase |
+| `src/utils/storage.ts` | Reescrito async + `deletarUsuario` |
+| `App.tsx` | Auth via `onAuthStateChange` |
+| `src/screens/LoginScreen.tsx` | Login async + erro inline |
+| `src/screens/HomeScreen.tsx` | **NOVO** — relógio + dados Selgron |
+| `src/screens/OSScreen.tsx` | Calls async + `handleAssinatura` async |
+| `src/screens/ReembolsoScreen.tsx` | Calls async |
+| `src/screens/AdminScreen.tsx` | **NOVO** — painel gestor/admin |
+| `src/screens/UserManagementScreen.tsx` | **NOVO** — gestão + exclusão de usuários |
+| `src/navigation/AppNavigator.tsx` | Sidebar cobre topbar, overlay, botão ✕ |
+
+---
+
+## Testes realizados
+
+- [x] Login com usuário existente
+- [x] Login com usuário inválido — erro inline em vermelho
+- [x] Sidebar cobre topbar ao abrir
+- [x] Overlay escurecido ao abrir sidebar
+- [x] Admin vê painel e gestão de usuários
+- [x] Admin consegue excluir usuário (com confirmação)
+- [x] HomeScreen mostra relógio em tempo real (fuso Brasília)
+- [ ] Criar OS, deslogar, logar — OS persiste (a validar)
+- [ ] Usuário tecnico não vê OS de outro tecnico (a validar)
 
 ---
 
