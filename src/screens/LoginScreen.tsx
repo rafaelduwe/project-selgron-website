@@ -10,22 +10,20 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
 
-  function handleLogin() {
+  async function handleLogin() {
     if (!email || !senha) {
       Alert.alert('Atenção', 'Preencha email e senha.');
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      const { login } = require('../utils/storage');
-      const usuario = login(email.trim().toLowerCase(), senha);
-      if (usuario) {
-        onLogin();
-      } else {
-        Alert.alert('Erro', 'Email ou senha incorretos.');
-      }
-    }, 300);
+    const { login } = require('../utils/storage');
+    const usuario = await login(email.trim().toLowerCase(), senha);
+    setLoading(false);
+    if (usuario) {
+      onLogin();
+    } else {
+      Alert.alert('Erro', 'Email ou senha incorretos.');
+    }
   }
 
   return (

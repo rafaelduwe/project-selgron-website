@@ -40,9 +40,9 @@ export default function ReembolsoScreen() {
 
   useEffect(() => { if (tela === 'lista') carregarRelatorios(); }, [tela]);
 
-  function carregarRelatorios() {
+  async function carregarRelatorios() {
     const usuario = getUsuarioLogado();
-    if (usuario) setRelatorios(getRelatorios(usuario.id));
+    if (usuario) setRelatorios(await getRelatorios(usuario.id));
   }
 
   function formatarPeriodo(ini: Date | null, fim: Date | null): string {
@@ -51,7 +51,7 @@ export default function ReembolsoScreen() {
     return fim ? `${f(ini)} a ${f(fim)}` : f(ini);
   }
 
-  function criarRelatorio() {
+  async function criarRelatorio() {
     if (!clientes || !dataInicio) {
       Alert.alert('Atenção', 'Preencha o cliente e a data de início.');
       return;
@@ -70,7 +70,7 @@ export default function ReembolsoScreen() {
       gerado: false,
       usuarioId: usuario.id,
     };
-    salvarRelatorio(novo);
+    await salvarRelatorio(novo);
     setRelatorioAtual(novo);
     limparCamposRelatorio();
     setTela('verRelatorio');
@@ -115,7 +115,7 @@ export default function ReembolsoScreen() {
   }
 
 
-  function adicionarNota() {
+  async function adicionarNota() {
     if (!valor) { Alert.alert('Atenção', 'Informe o valor.'); return; }
     if (!extraviada && !fotoUri) { Alert.alert('Atenção', 'Tire a foto ou marque como extraviada.'); return; }
     if (!relatorioAtual) return;
@@ -129,7 +129,7 @@ export default function ReembolsoScreen() {
     };
 
     const atualizado = { ...relatorioAtual, notas: [...relatorioAtual.notas, nota] };
-    salvarRelatorio(atualizado);
+    await salvarRelatorio(atualizado);
     setRelatorioAtual(atualizado);
     limparCamposNota();
     setTela('verRelatorio');
@@ -229,7 +229,7 @@ export default function ReembolsoScreen() {
     `;
 
     const atualizado = { ...relatorioAtual, gerado: true };
-    salvarRelatorio(atualizado);
+    await salvarRelatorio(atualizado);
     setRelatorioAtual(atualizado);
 
     if (Platform.OS === 'web') {

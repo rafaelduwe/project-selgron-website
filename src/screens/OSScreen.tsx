@@ -73,9 +73,9 @@ export default function OSScreen() {
 
   useEffect(() => { if (tela === 'lista') carregarOrdens(); }, [tela]);
 
-  function carregarOrdens() {
+  async function carregarOrdens() {
     const u = getUsuarioLogado();
-    if (u) setOrdens(getOrdens(u.id));
+    if (u) setOrdens(await getOrdens(u.id));
   }
 
   function iniciarNovaOS() {
@@ -191,7 +191,7 @@ export default function OSScreen() {
       const dataAssinatura = new Date().toLocaleString('pt-BR');
       const osAtualizada = { ...os, assinaturaCliente: sig, dataAssinatura, gerada: true };
       setOS(osAtualizada);
-      salvarOS(osAtualizada);
+      await salvarOS(osAtualizada);
       setTela('verOS');
       gerarPDF(osAtualizada);
     }
@@ -635,8 +635,8 @@ export default function OSScreen() {
             <Text style={styles.botaoTexto}>PRÓXIMO →</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.botao} onPress={() => {
-            salvarOS(os);
+          <TouchableOpacity style={styles.botao} onPress={async () => {
+            await salvarOS(os);
             abrirAssinatura();
           }}>
             <Text style={styles.botaoTexto}>IR PARA ASSINATURAS ✍</Text>
