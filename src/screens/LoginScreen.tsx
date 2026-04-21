@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image,
+  ActivityIndicator, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { Colors } from '../theme/colors';
 
@@ -9,12 +9,14 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState('');
 
   async function handleLogin() {
     if (!email || !senha) {
-      Alert.alert('Atenção', 'Preencha email e senha.');
+      setErro('Preencha email e senha.');
       return;
     }
+    setErro('');
     setLoading(true);
     const { login } = require('../utils/storage');
     const usuario = await login(email.trim().toLowerCase(), senha);
@@ -22,7 +24,7 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
     if (usuario) {
       onLogin();
     } else {
-      Alert.alert('Erro', 'Email ou senha incorretos.');
+      setErro('Email ou senha incorretos.');
     }
   }
 
@@ -64,8 +66,10 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
           secureTextEntry
         />
 
+        {erro ? <Text style={styles.erro}>{erro}</Text> : null}
+
         <TouchableOpacity
-          style={styles.botao}
+          style={[styles.botao, loading && { opacity: 0.7 }]}
           onPress={handleLogin}
           disabled={loading}
         >
@@ -145,10 +149,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 2,
   },
-  demoTexto: {
-    color: Colors.textSecondary,
-    fontSize: 11,
+  erro: {
+    color: '#ff6b6b',
+    fontSize: 13,
     textAlign: 'center',
-    marginTop: 16,
+    marginBottom: 10,
+    backgroundColor: '#2d1010',
+    padding: 10,
+    borderRadius: 8,
   },
 });
