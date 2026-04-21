@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logoImagem: {
-    width: 220,
-    height: 80,
+    width: '85%' as any,
+    height: 140,
     marginBottom: 8,
   },
   logoSub: {
