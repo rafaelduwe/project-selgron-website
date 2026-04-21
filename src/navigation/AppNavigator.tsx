@@ -93,7 +93,7 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
       {/* ── Top bar ── */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={toggle} style={styles.hamburger}>
-          <Text style={styles.hamburgerIcon}>{open && !isDesktop ? '✕' : '☰'}</Text>
+          <Text style={styles.hamburgerIcon}>☰</Text>
         </TouchableOpacity>
         <Text style={styles.topBarTitle} numberOfLines={1}>
           {activeItem.icon}  {activeItem.label}
@@ -118,11 +118,18 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
       )}
 
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: slideAnim }] }]}>
-        <Image
-          source={require('../../assets/selgron-logo.png')}
-          style={styles.sidebarLogo}
-          resizeMode="contain"
-        />
+        <View style={styles.sidebarHeader}>
+          <Image
+            source={require('../../assets/selgron-logo.png')}
+            style={styles.sidebarLogo}
+            resizeMode="contain"
+          />
+          {!isDesktop && (
+            <TouchableOpacity onPress={toggle} style={styles.fecharBtn}>
+              <Text style={styles.fecharIcon}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <Text style={styles.sidebarSub}>Plataforma Interna</Text>
         <View style={styles.sidebarDivider} />
 
@@ -197,7 +204,12 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
 
-  sidebarLogo: { width: '100%', height: 56, marginBottom: 4 },
+  sidebarHeader: {
+    flexDirection: 'row', alignItems: 'center', marginBottom: 4,
+  },
+  sidebarLogo: { flex: 1, height: 56 },
+  fecharBtn: { padding: 8 },
+  fecharIcon: { fontSize: 18, color: Colors.textSecondary },
   sidebarSub: {
     color: Colors.textSecondary, fontSize: 11,
     letterSpacing: 2, textAlign: 'center', marginBottom: 16,
