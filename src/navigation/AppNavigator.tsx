@@ -100,8 +100,8 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
         </Text>
       </View>
 
+      {/* ── Conteúdo ── */}
       <View style={styles.body}>
-        {/* ── Conteúdo (sempre largura total) ── */}
         <View style={styles.content}>
           {activeTab === 'home'      && <HomeScreen />}
           {activeTab === 'token'     && <TokenScreen />}
@@ -110,55 +110,51 @@ export default function AppNavigator({ onLogout }: { onLogout: () => void }) {
           {activeTab === 'admin'     && <AdminScreen />}
           {activeTab === 'usuarios'  && <UserManagementScreen />}
         </View>
-
-        {/* ── Overlay (cobre tudo incluindo topbar) ── */}
-        {open && !isDesktop && (
-          <TouchableOpacity style={styles.overlay} onPress={toggle} activeOpacity={1} />
-        )}
-
-        {/* ── Sidebar (cobre topbar quando aberto) ── */}
-        <Animated.View style={[
-          styles.sidebar,
-          { transform: [{ translateX: slideAnim }] },
-        ]}>
-          <Image
-            source={require('../../assets/selgron-logo.png')}
-            style={styles.sidebarLogo}
-            resizeMode="contain"
-          />
-          <Text style={styles.sidebarSub}>Plataforma Interna</Text>
-          <View style={styles.sidebarDivider} />
-
-          {MENU.map(item => {
-            const ativo = activeTab === item.key;
-            return (
-              <TouchableOpacity
-                key={item.key}
-                style={[styles.menuItem, ativo && styles.menuItemAtivo]}
-                onPress={() => navegar(item.key)}
-              >
-                <Text style={styles.menuIcon}>{item.icon}</Text>
-                <View>
-                  <Text style={[styles.menuLabel, ativo && styles.menuLabelAtivo]}>
-                    {item.label}
-                  </Text>
-                  <Text style={styles.menuSub}>{item.sub}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-
-          <View style={{ flex: 1 }} />
-          <View style={styles.sidebarDivider} />
-          <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-            <Text style={styles.menuIcon}>🚪</Text>
-            <View>
-              <Text style={styles.menuLabel}>Sair</Text>
-              <Text style={styles.menuSub}>{usuario?.nome ?? ''}</Text>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
       </View>
+
+      {/* ── Overlay e Sidebar fora do body — sobrepõem tudo incluindo topbar ── */}
+      {open && !isDesktop && (
+        <TouchableOpacity style={styles.overlay} onPress={toggle} activeOpacity={1} />
+      )}
+
+      <Animated.View style={[styles.sidebar, { transform: [{ translateX: slideAnim }] }]}>
+        <Image
+          source={require('../../assets/selgron-logo.png')}
+          style={styles.sidebarLogo}
+          resizeMode="contain"
+        />
+        <Text style={styles.sidebarSub}>Plataforma Interna</Text>
+        <View style={styles.sidebarDivider} />
+
+        {MENU.map(item => {
+          const ativo = activeTab === item.key;
+          return (
+            <TouchableOpacity
+              key={item.key}
+              style={[styles.menuItem, ativo && styles.menuItemAtivo]}
+              onPress={() => navegar(item.key)}
+            >
+              <Text style={styles.menuIcon}>{item.icon}</Text>
+              <View>
+                <Text style={[styles.menuLabel, ativo && styles.menuLabelAtivo]}>
+                  {item.label}
+                </Text>
+                <Text style={styles.menuSub}>{item.sub}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+
+        <View style={{ flex: 1 }} />
+        <View style={styles.sidebarDivider} />
+        <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+          <Text style={styles.menuIcon}>🚪</Text>
+          <View>
+            <Text style={styles.menuLabel}>Sair</Text>
+            <Text style={styles.menuSub}>{usuario?.nome ?? ''}</Text>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
@@ -181,15 +177,15 @@ const styles = StyleSheet.create({
   hamburgerIcon: { fontSize: 20, color: Colors.text },
   topBarTitle: { flex: 1, color: Colors.text, fontWeight: 'bold', fontSize: 15 },
 
-  body: { flex: 1, position: 'relative' },
+  body: { flex: 1 },
 
   overlay: {
-    position: 'absolute', top: -52, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10,
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100,
   },
 
   sidebar: {
-    position: 'absolute', top: -52, bottom: 0, left: 0,
+    position: 'absolute', top: 0, bottom: 0, left: 0,
     width: SIDEBAR_WIDTH,
     backgroundColor: Colors.card,
     borderRightWidth: 1,
@@ -197,7 +193,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingHorizontal: 12,
     paddingBottom: 12,
-    zIndex: 20,
+    zIndex: 110,
     flexDirection: 'column',
   },
 
